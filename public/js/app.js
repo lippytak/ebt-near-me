@@ -319,9 +319,6 @@ $(document).ready(function () {
   });
   
   // add header
-  
-  // x=Mustache.render($("#must-header").html());
-  
   ebt.map.controls[google.maps.ControlPosition.TOP_LEFT ].push(document.getElementById('header'));
   ebt.searchBox = new google.maps.places.SearchBox(document.getElementById("address-input"));
 
@@ -360,8 +357,8 @@ $(document).ready(function () {
 
   });
 
-    // Bias the SearchBox results towards places that are within the bounds of the
-    // current map's viewport.
+  // Bias the SearchBox results towards places that are within the bounds of the
+  // current map's viewport.
 
   google.maps.event.addListener(ebt.map, 'bounds_changed', function() {
     ebt.searchBox.setBounds(ebt.map.getBounds());

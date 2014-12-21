@@ -17,7 +17,7 @@
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 
     <!-- Mustache  -->
-    <script src="//https://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js"></script>
     
     <!-- C U S T O M   S T Y L E S -->
     <link rel="stylesheet" href="public/css/app.css">
@@ -25,10 +25,6 @@
     <!-- M O D E R N I Z E R -->
     <script src="public/js/modernizer.js"></script>
     
-    
-    
-    
-
     <!-- T Y P E K I T -->
     <script src="//use.typekit.net/ize7qgl.js"></script>
     <script>try{Typekit.load();}catch(e){}</script>
@@ -46,6 +42,12 @@
   </head>
 
   <body>
+    <div id="map-canvas"></div>
+    <div id="printable-list-div">
+      <h2 class="print-identity">EBT Near Me</h2>
+      <h3 class="print-header">EBT Retail and ATM Locations</h3>
+      <ul></ul>
+    </div>
     <div id="header" class="header-content">
       <img id="logo" class="logo-img" src="public/img/logo.png" alt="" name="logo">
       <h1 id="title-thick" class="title">EBT</h1>
@@ -58,14 +60,10 @@
               type="search" name="search" style="display:none">
     </div>
 
+    <script id="info-window" type="x-tmpl-mustache">
 
-    <div id="map-canvas"></div>
-    <div id="printable-list-div">
-      <h2 class="print-identity">EBT Near Me</h2>
-      <h3 class="print-header">EBT Retail and ATM Locations</h3>
-      <ul></ul>
-    </div>
 
+    </script>
 
     <script src="public/js/app.js"></script>
   </body>
