@@ -118,6 +118,71 @@ ebt.googlemapOptions = {
 };
 
 ebt.utils = {
+  templates:{
+    printed_name: function () {
+      var row = this
+      switch (row.type){
+        case 'store':
+          return row.store_name;
+          break;
+        case 'ATM':
+          if (row.location_name){
+            return '<b>ATM</b> at ' + row.location_name;
+          } 
+          else {
+            return 'This is a ' + row.atm_name + '<b>ATM</b>';
+          }
+          break;
+        case 'POS':
+          if (row.location_name){
+            return 'Cash back at ' + row.location_name;
+          }
+          break;
+        default:
+          return ''
+      }
+    },
+    printed_address: function () {
+      return ebt.utils.toTitleCase(this.text_address)
+    },
+    cost_phrase: function () {
+      if (this.type === 'store'){
+        return false
+      }
+      switch (this.surcharge){
+        case '0':
+          return "It's <b>free</b> to use and you can get up to <b>$" + this.cash_limit + "</b>";
+          break;
+        case 'NaN':
+          return 'You can take out <b>$' + this.cash_limit + '</b> but you have to pay a <b>2% fee</b>.';
+          break;
+        default:
+          return 'It costs <b>$' + this.surcharge + '</b> to use and you can get up to <b>$' + this.cash_limit + '</b>';  
+      }
+    }
+  },
+  renderPrintRow: function (data) {
+    if (data.rows) {
+      var rows = data.rows.map(function (row) {
+        response ={}
+        $.each(row, function( index, value ) {
+          response[data.columns[index]] = value
+        });
+        response.printed_name = ebt.utils.templates.printed_name
+        response.cost_phrase = ebt.utils.templates.cost_phrase
+        response.printed_address = ebt.utils.templates.printed_address
+        
+        return response
+      })
+
+    }
+        
+    x= Mustache.render($('#print-list').html(),{rows:rows})
+      
+    console.log(x)
+    
+    
+  },
   getPhrasesFromRow : function (row) {
     phrases = {}
     row_hash = {};
@@ -212,10 +277,10 @@ ebt.utils = {
     var ne = bounds.getNorthEast()
     var r = (google.maps.geometry.spherical.computeDistanceBetween(sw, ne))/2
     var center = ebt.map.getCenter()
-    var query = ['SELECT *',
-                'FROM ' + ebt.fusion.table,
-                'WHERE ST_INTERSECTS(geo_address, CIRCLE(LATLNG' + center + ', ' + r + '))',
-                'LIMIT 12']
+    var query = ['SELECT * FROM',
+                 ebt.fusion.table,
+                 'WHERE ST_INTERSECTS(geo_address, CIRCLE(LATLNG',
+                 center,',',r,')) LIMIT 12']
                 .join(' ')
 
     // Send the JSONP request using jQuery
@@ -226,7 +291,7 @@ ebt.utils = {
       },
       url: 'https://www.googleapis.com/fusiontables/v1/query',
       dataType: 'jsonp',
-      success:ebt.utils.appendVisibleAtmData
+      success:ebt.utils.renderPrintRow
     })
   },
   addLayersAndIdleListener : function () {
@@ -309,15 +374,8 @@ $(document).ready(function () {
 
   ebt.map = new google.maps.Map(document.getElementById('map-canvas'), ebt.googlemapOptions);
 
-  // Try HTML5 geolocation
-  $(function () {
-    if (Modernizr.geolocation) {
-      navigator.geolocation.getCurrentPosition(ebt.handle.foundLocation, ebt.handle.noLocation, {timeout:7000});
-    } else {
-      ebt.handle.noLocation();
-    }
-  });
-  
+  ebt.place.marker = new google.maps.Marker();
+    
   // add header
   ebt.map.controls[google.maps.ControlPosition.TOP_LEFT ].push(document.getElementById('header'));
   ebt.searchBox = new google.maps.places.SearchBox(document.getElementById("address-input"));
@@ -344,7 +402,7 @@ $(document).ready(function () {
 
     // Remove current marker if it exists and add the new one
     if (ebt.place.marker) {ebt.place.marker.setMap(null)};
-    ebt.place.marker = new google.maps.Marker({
+    ebt.place.marker.setOptions({
       map: ebt.map,
       icon: ebt.place.image,
       title: place.name,
@@ -399,5 +457,14 @@ $(document).ready(function () {
     });
     ebt.infoWindow.open(ebt.map);
 
+  });
+  
+  // Try HTML5 geolocation
+  $(function () {
+    if (Modernizr.geolocation) {
+      navigator.geolocation.getCurrentPosition(ebt.handle.foundLocation, ebt.handle.noLocation, {timeout:7000});
+    } else {
+      ebt.handle.noLocation();
+    }
   });
 });

@@ -60,9 +60,30 @@
               type="search" name="search" style="display:none">
     </div>
 
-    <script id="info-window" type="x-tmpl-mustache">
-
-
+    <script id="print-list" type="x-tmpl-mustache">
+      <div id="printable-list-div">
+        <h2 class="print-identity">
+          EBT Near Me
+        </h2>
+        <h3 class="print-header">
+          EBT Retail and ATM Locations
+        </h3>
+        {{.}}
+        <ul>
+          {{#rows}}
+              <li>
+                <b>{{&printed_name}}</b><br>
+                {{#cost_phrase}}
+                  <b>{{&.}}</b><br>
+                {{/cost_phrase}}  
+                <b>{{printed_address}}</b><br>
+              </li>
+          {{/rows}}
+          {{^rows}}
+            <li>If you find some ATMs on the map I ll print out the details here.</li>
+          {{/rows}}
+        </ul>
+      </div>   
     </script>
 
     <script src="public/js/app.js"></script>
