@@ -12,14 +12,7 @@ ebt = {
     marker: null
   },
   place:{
-    marker: null,
-    image : {
-      url: null,
-      size: new google.maps.Size(71, 71),
-      origin: new google.maps.Point(0, 0),
-      anchor: new google.maps.Point(17, 34),
-      scaledSize: new google.maps.Size(25, 25)
-    }
+    marker: new google.maps.Marker()
   },
   infoWindow : new google.maps.InfoWindow(),
   directions_pre_link:"",
@@ -160,18 +153,18 @@ ebt.utils = {
               return 'This is an <b>ATM</b> at ' + row.location_name;
             } 
             else {
-              return 'This is a ' + atm_name + ' <b>ATM</b>';
+              return 'This is a ' + row.atm_name + ' <b>ATM</b>';
             }
             break;
           case 'POS':
-            return 'This is a cash back location at ' + location_name;
+            return 'This is a cash back location at ' + row.location_name;
             break;
           default:
             return ''
         }      
       },
       directions: function () {
-        return ebt.directions_pre_link + encodeURIComponent(text_address) + "' target='_blank'>" + this.text_address + "</a>";
+        return ebt.directions_pre_link + encodeURIComponent(this.text_address) + "' target='_blank'>" + this.text_address + "</a>";
       },
       feedback :  function () {
         // See CfA Wufoo API docs for details
@@ -197,7 +190,8 @@ ebt.utils = {
   },
   appendPrintRows: function (data) {
     $( "#printable-list-div" ).empty();
-    $('#printable-list-div').append(ebt.utils.renderPrintRows(data))  
+    $('#printable-list-div').html(ebt.utils.renderPrintRows(data)) 
+    $('#printable-list-div').offsetHeight
   },
   renderPrintRows: function (data) {
     if (data.rows) {
@@ -284,6 +278,8 @@ ebt.handle ={
       });
 
     GeoMarker.setMap(ebt.map);
+    
+    ebt.utils.addLayersAndIdleListener();
   },
   noLocation : function () {
     infowindow = new google.maps.InfoWindow({
@@ -330,10 +326,7 @@ $(document).ready(function () {
   }
 
   ebt.map = new google.maps.Map(document.getElementById('map-canvas'), ebt.googlemapOptions);
-
-  ebt.place.marker = new google.maps.Marker();
     
-
   // add header
   ebt.map.controls[google.maps.ControlPosition.TOP_LEFT ].push(document.getElementById('header'));
   ebt.searchBox = new google.maps.places.SearchBox(document.getElementById("address-input"));
@@ -355,14 +348,9 @@ $(document).ready(function () {
   google.maps.event.addListener(ebt.searchBox, 'places_changed', function() {
     place = ebt.searchBox.getPlaces()[0];
 
-    // Get the icon, place name, and location.
-    ebt.place.image = place.icon
-
-    // Remove current marker if it exists and add the new one
-    if (ebt.place.marker) {ebt.place.marker.setMap(null)};
     ebt.place.marker.setOptions({
       map: ebt.map,
-      icon: ebt.place.image,
+      icon: place.icon,
       title: place.name,
       position: place.geometry.location
     });
@@ -380,16 +368,15 @@ $(document).ready(function () {
     ebt.searchBox.setBounds(ebt.map.getBounds());
   });
 
-
   google.maps.event.addListener(ebt.fusion.data_layer, 'click', function(e) {
 
-    phrases = ebt.utils.getPhrasesFromRow(e.row);
-
     // Log click events in Google analytics
-    if (type=='ATM'||type=='POS') {
-      ga('send', 'event', 'ATM', 'click', 1);
-    } else if (type=='store') {
-      ga('send', 'event', 'Store', 'click', 1);
+    switch(e.row.type.value){
+      case 'store':
+        ga('send', 'event', 'Store', 'click', 1);
+        break;
+      default:
+        ga('send', 'event', 'ATM', 'click', 1);
     }
 
     ebt.infoWindow.setOptions({
@@ -397,6 +384,7 @@ $(document).ready(function () {
       position: e.latLng,
       pixelOffset: e.pixelOffset
     });
+
     ebt.infoWindow.open(ebt.map);
 
   });

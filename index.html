@@ -66,13 +66,13 @@
         </h3>
         <ul>
           {{#rows}}
-              <li>
-                <b>{{&name}}</b><br>
-                {{#cost}}
-                  {{&.}}<br>
-                {{/cost}}  
-                {{address}}<br>
-              </li>
+          <li>
+            <b>{{&name}}</b><br>
+            {{#cost}}
+              {{&.}}<br>
+            {{/cost}}  
+            {{address}}<br>
+          </li>
           {{/rows}}
           {{^rows}}
             <li>If you find some ATMs on the map I ll print out the details here.</li>
@@ -82,11 +82,11 @@
 
     <script id="infowindow-template" type="x-tmpl-mustache">
       <div>
-        <b>{{&name}}</b><br>
-          {{#cost}}
-            {{&.}}<br>
-          {{/cost}}  
-        {{&directions}}<br>
+        <b>{{&name}}</b><br><br>
+        {{#cost}}
+          {{&.}}<br><br>
+        {{/cost}}  
+        {{&directions}}<br><br>
         {{&feedback}}  
       </div>  
     </script>
