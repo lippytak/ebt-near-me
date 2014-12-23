@@ -28,7 +28,8 @@ ebt = {
     LatLng: new google.maps.LatLng(37.7833, -122.4167), // San Francisco
     no_geolocation_zoom : 10,
     default_zoom : 18,
-    visible_atm_data:null
+    visible_atm_data:null,
+    feedback_url: 'https://codeforamerica.wufoo.com/forms/ebtnearme-feedback/def/field3=' 
   }
 }
 
@@ -60,7 +61,7 @@ ebt.markers = {
         iconName: 'blu_circle'
       },
       legend: {
-        title:'Stores that accept CalFresh',
+        title:'CalFresh Stores',
         color: 'blue'
       }
     }
@@ -82,7 +83,7 @@ ebt.markers = {
   legend : function (i) {
     return ebt.markers.getArray('legend',i)
       .map(function (val) {
-        return '<div class="legend-item"><div class="color '+val.color+'"></div>'+val.title+'</p></div>'
+        return '<div class="legend-item"><div class="color '+val.color+'"></div><p>'+val.title+'</p></div>'
       })
       .join('')
   }
@@ -119,31 +120,64 @@ ebt.googlemapOptions = {
 
 ebt.utils = {
   templates:{
-    printed_name: function () {
-      var row = this
-      switch (row.type){
-        case 'store':
-          return row.store_name;
-          break;
-        case 'ATM':
-          if (row.location_name){
-            return '<b>ATM</b> at ' + row.location_name;
-          } 
-          else {
-            return 'This is a ' + row.atm_name + '<b>ATM</b>';
-          }
-          break;
-        case 'POS':
-          if (row.location_name){
-            return 'Cash back at ' + row.location_name;
-          }
-          break;
-        default:
-          return ''
+    printed :{
+      name: function () {
+        var row = this
+        switch (row.type){
+          case 'store':
+            return row.store_name;
+            break;
+          case 'ATM':
+            if (row.location_name){
+              return '<b>ATM</b> at ' + row.location_name;
+            } 
+            else {
+              return 'This is a ' + row.atm_name + '<b>ATM</b>';
+            }
+            break;
+          case 'POS':
+            if (row.location_name){
+              return 'Cash back at ' + row.location_name;
+            }
+            break;
+          default:
+            return ''
+        }
+      },
+      address: function () {
+        return ebt.utils.toTitleCase(this.text_address)
       }
     },
-    printed_address: function () {
-      return ebt.utils.toTitleCase(this.text_address)
+    infowindow: {
+      name: function () {
+        var row = this
+        switch (row.type){
+          case 'store':
+            return row.store_name
+            break;
+          case 'ATM':
+            if (row.location_name){
+              return 'This is an <b>ATM</b> at ' + row.location_name;
+            } 
+            else {
+              return 'This is a ' + atm_name + ' <b>ATM</b>';
+            }
+            break;
+          case 'POS':
+            return 'This is a cash back location at ' + location_name;
+            break;
+          default:
+            return ''
+        }      
+      },
+      directions: function () {
+        return ebt.directions_pre_link + encodeURIComponent(text_address) + "' target='_blank'>" + this.text_address + "</a>";
+      },
+      feedback :  function () {
+        // See CfA Wufoo API docs for details
+        wufoo_url = ebt.options.feedback_url + this.type + '&field2=' + this.text_address;
+        return '<a href="' + wufoo_url + '">Report a problem with this location</a>'
+      }
     },
     cost_phrase: function () {
       if (this.type === 'store'){
@@ -161,115 +195,41 @@ ebt.utils = {
       }
     }
   },
-  renderPrintRow: function (data) {
+  appendPrintRows: function (data) {
+    $( "#printable-list-div" ).empty();
+    $('#printable-list-div').append(ebt.utils.renderPrintRows(data))  
+  },
+  renderPrintRows: function (data) {
     if (data.rows) {
       var rows = data.rows.map(function (row) {
-        response ={}
+        view ={}
         $.each(row, function( index, value ) {
-          response[data.columns[index]] = value
+          view[data.columns[index]] = value
         });
-        response.printed_name = ebt.utils.templates.printed_name
-        response.cost_phrase = ebt.utils.templates.cost_phrase
-        response.printed_address = ebt.utils.templates.printed_address
-        
-        return response
+        view.name = ebt.utils.templates.printed.name
+        view.cost = ebt.utils.templates.cost_phrase
+        view.address = ebt.utils.templates.printed.address
+        return view
       })
-
+      return Mustache.render($('#print-template').html(),{rows:rows})
     }
-        
-    x= Mustache.render($('#print-list').html(),{rows:rows})
-      
-    console.log(x)
-    
-    
   },
-  getPhrasesFromRow : function (row) {
-    phrases = {}
-    row_hash = {};
+  renderInfowindow: function (row) {
+    view = {};
     $.each( row, function( key, value ) {
-      row_hash[key] = value.value
+      view[key] = value.value
     });
-    type = row_hash['type']
-    text_address = row_hash['text_address']
-    phrases["directions_link"] = ebt.directions_pre_link + encodeURIComponent(text_address) + "' target='_blank'>" + text_address + "</a>";
-    location_name = row_hash['location_name']
-    atm_name = row_hash['atm_name']
 
-    switch (type){
-      case 'store':
-        phrases["name_phrase"] = row_hash['store_name'];
-        phrases["printable_name_phrase"] = phrases["name_phrase"];
-        break;
-      case 'ATM':
-        if (location_name){
-          phrases["name_phrase"] = 'This is an <b>ATM</b> at ' + location_name;
-          phrases["printable_name_phrase"] = '<b>ATM</b> at ' + location_name;
-        } 
-        else {
-          phrases["name_phrase"] = 'This is a ' + atm_name + ' <b>ATM</b>';
-          phrases["printable_name_phrase"] = 'This is a ' + atm_name + ' <b>ATM</b>';
-        }
-        break;
-      case 'POS':
-        phrases["name_phrase"] = 'This is a cash back location at ' + location_name;
-        phrases["printable_name_phrase"] = 'Cash back at ' + location_name;
-        break;
-    }
+    view.name = ebt.utils.templates.infowindow.name
+    view.directions = ebt.utils.templates.infowindow.directions
+    view.feedback = ebt.utils.templates.infowindow.feedback
+    view.cost = ebt.utils.templates.cost_phrase
 
+    return Mustache.render($('#infowindow-template').html(),view)
     
-    phrases["cost_phrase"] = (function(surcharge,cash_limit){
-      switch (surcharge){
-        case '0':
-          cost_phrase = "It's <b>free</b> to use and you can get up to <b>$" + cash_limit + "</b>";
-          break;
-        case NaN:
-          cost_phrase = 'You can take out <b>$' + cash_limit + '</b> but you have to pay <b>2% fee</b>.';
-          break;
-        default:
-          cost_phrase = 'It costs <b>$' + surcharge + '</b> to use and you can get up to <b>$' + cash_limit + '</b>';  
-      }
-      
-    }
-    )(row_hash['surcharge'],row_hash['cash_limit'])
-    
-    // See CfA Wufoo API docs for details
-    wufoo_url = 'https://codeforamerica.wufoo.com/forms/ebtnearme-feedback/def/field3=' + type + '&field2=' + text_address;
-    feedback_link_html = '<a href="' + wufoo_url + '">Report a problem with this location</a>'
-    phrases["feedback_link_html"] = feedback_link_html;
-    return phrases;
   },
   toTitleCase : function (str) {
     return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-  },
-  appendVisibleAtmData : function (data) {
-    visible_atm_data = data;
-    // Append data to printable list
-    var list = $( "#printable-list-div ul" ).empty();
-    var rows = visible_atm_data['rows']
-    var cols = visible_atm_data['columns']
-    if (rows) {
-      $.each(rows, function( index, value ) {
-
-        var row_hash = {};
-        $.each( value, function( index, value ) {
-          row_hash[cols[index]] = value
-        });
-
-        phrases = ebt.utils.getPhrasesFromRow(row_hash)
-        if (row_hash['type'] == 'store') {
-          list.append( "<li><b>" + phrases['printable_name_phrase'] + "</b><br>"
-            + ebt.utils.toTitleCase(row_hash['text_address'])
-            + "</li>" );
-        } else {
-          list.append( "<li><b>" + phrases['printable_name_phrase'] + "</b><br>"
-            + phrases['cost_phrase'] + "<br>"
-            + ebt.utils.toTitleCase(row_hash['text_address'])
-            + "</li>" );
-        }
-      });
-    } else {
-      list.append( "<li>If you find some ATMs on the map I'll print out the details here.</li>");
-    }
   },
   queryAndAppendVisibleATMData : function () {
     var bounds = ebt.map.getBounds()
@@ -291,7 +251,7 @@ ebt.utils = {
       },
       url: 'https://www.googleapis.com/fusiontables/v1/query',
       dataType: 'jsonp',
-      success:ebt.utils.renderPrintRow
+      success: ebt.utils.appendPrintRows
     })
   },
   addLayersAndIdleListener : function () {
@@ -355,27 +315,25 @@ ebt.handle ={
 
 $(document).ready(function () {
 
-  switch (navigator.userAgent){
-    case 'iPhone':
-      ebt.directions_pre_link = "<a href='http://maps.google.com/?saddr=Current%20Location&daddr=";
-      break;
-    case 'Android':
-      ebt.directions_pre_link = "<a href='geo:";
-      break;
-    default:
-      ebt.directions_pre_link = "<a href='http://maps.google.com?q=";
-      // Add zoom button for laptops/desktops
-      ebt.googlemapOptions.zoomControl = true
-      ebt.googlemapOptions.zoomControlOptions = {
-        style: google.maps.ZoomControlStyle.LARGE,
-        position: google.maps.ControlPosition.LEFT_CENTER
-      }
+  if (/iPhone/i.test(navigator.userAgent)) {
+    ebt.directions_pre_link = "<a href='http://maps.google.com/?saddr=Current%20Location&daddr="
+  } else if (/Android/i.test(navigator.userAgent)) {
+    ebt.directions_pre_link = "<a href='geo:"
+  } else {
+    ebt.directions_pre_link = "<a href='http://maps.google.com?q="
+    // Add zoom button for laptops/desktops
+    ebt.googlemapOptions.zoomControl = true
+    ebt.googlemapOptions.zoomControlOptions = {
+      style: google.maps.ZoomControlStyle.LARGE,
+      position: google.maps.ControlPosition.LEFT_CENTER
+    }
   }
 
   ebt.map = new google.maps.Map(document.getElementById('map-canvas'), ebt.googlemapOptions);
 
   ebt.place.marker = new google.maps.Marker();
     
+
   // add header
   ebt.map.controls[google.maps.ControlPosition.TOP_LEFT ].push(document.getElementById('header'));
   ebt.searchBox = new google.maps.places.SearchBox(document.getElementById("address-input"));
@@ -389,10 +347,10 @@ $(document).ready(function () {
 
 
   // start adding events
-  
+
   $('#toggle-target').on("click",function (e) {
     ebt.handle.toggleSearch()
-  })  
+  })
 
   google.maps.event.addListener(ebt.searchBox, 'places_changed', function() {
     place = ebt.searchBox.getPlaces()[0];
@@ -434,24 +392,8 @@ $(document).ready(function () {
       ga('send', 'event', 'Store', 'click', 1);
     }
 
-    // Create info window
-    new_info = $('<div>')
-    new_info.append($('<b>').html(phrases['name_phrase']))
-    new_info.append("<br><br>")
-
-    if (type==='ATM'||type==='POS'){
-      new_info.append($('<div>').html(phrases['cost_phrase']))
-      new_info.append("<br>")
-    }
-
-    new_info.append(phrases['directions_link'])
-    new_info.append("<br><br>")
-
-    new_info.append(phrases['feedback_link_html'])
-    new_info.append("<br><br>")
-
     ebt.infoWindow.setOptions({
-      content: new_info.html(),
+      content: ebt.utils.renderInfowindow(e.row),
       position: e.latLng,
       pixelOffset: e.pixelOffset
     });

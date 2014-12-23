@@ -43,11 +43,8 @@
 
   <body>
     <div id="map-canvas"></div>
-    <div id="printable-list-div">
-      <h2 class="print-identity">EBT Near Me</h2>
-      <h3 class="print-header">EBT Retail and ATM Locations</h3>
-      <ul></ul>
-    </div>
+    <div id="printable-list-div"></div>
+    
     <div id="header" class="header-content">
       <img id="logo" class="logo-img" src="public/img/logo.png" alt="" name="logo">
       <h1 id="title-thick" class="title">EBT</h1>
@@ -59,34 +56,43 @@
       <input id="address-input" class="sb-search-input" placeholder="Search for locations near an address" 
               type="search" name="search" style="display:none">
     </div>
-
-    <script id="print-list" type="x-tmpl-mustache">
-      <div id="printable-list-div">
+    
+    <script id="print-template" type="x-tmpl-mustache">
         <h2 class="print-identity">
           EBT Near Me
         </h2>
         <h3 class="print-header">
           EBT Retail and ATM Locations
         </h3>
-        {{.}}
         <ul>
           {{#rows}}
               <li>
-                <b>{{&printed_name}}</b><br>
-                {{#cost_phrase}}
-                  <b>{{&.}}</b><br>
-                {{/cost_phrase}}  
-                <b>{{printed_address}}</b><br>
+                <b>{{&name}}</b><br>
+                {{#cost}}
+                  {{&.}}<br>
+                {{/cost}}  
+                {{address}}<br>
               </li>
           {{/rows}}
           {{^rows}}
             <li>If you find some ATMs on the map I ll print out the details here.</li>
           {{/rows}}
-        </ul>
-      </div>   
+        </ul>  
+    </script>
+
+    <script id="infowindow-template" type="x-tmpl-mustache">
+      <div>
+        <b>{{&name}}</b><br>
+          {{#cost}}
+            {{&.}}<br>
+          {{/cost}}  
+        {{&directions}}<br>
+        {{&feedback}}  
+      </div>  
     </script>
 
     <script src="public/js/app.js"></script>
+
   </body>
 </html>
 
