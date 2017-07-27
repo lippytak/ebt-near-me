@@ -193,7 +193,7 @@ ebt.utils = {
         sql: query,
         key: ebt.fusion.apiKey
       },
-      url: 'https://www.googleapis.com/fusiontables/v1/query',
+      url: 'https://www.googleapis.com/fusiontables/v2/query',
       dataType: 'jsonp',
       success:ebt.utils.appendVisibleAtmData
     })
