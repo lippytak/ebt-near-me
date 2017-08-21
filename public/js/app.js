@@ -65,14 +65,14 @@ ebt.markers = {
 }
 
 ebt.fusion ={
-  table : '1gTMiiUxNgLDISIymtea1gJ9oph_F4Lt7BE-FLfAe',
+  table : '1TUUov5EGwj3w0Zkba_71E6akkSUieikCsHfVq1-I',
   apiKey : 'AIzaSyDzaRUwEz7l0m3sEbROdDNCNRmsJ-zvUUc'
 }
 
 ebt.fusion.data_layer = new google.maps.FusionTablesLayer({
   suppressInfoWindows:true,
   query: {
-    select: 'geo_address',
+    select: 'text_address',
     from: ebt.fusion.table,
     where: "state = '"+ebt.options.state+"'"},
   styles: ebt.markers.styles()
@@ -146,6 +146,7 @@ ebt.utils = {
     return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
   },
   appendVisibleAtmData : function (data) {
+    console.log(data)
     visible_atm_data = data;
     // Append data to printable list
     var list = $( "#printable-list-div ul" ).empty();
@@ -196,6 +197,7 @@ ebt.utils = {
       url: 'https://www.googleapis.com/fusiontables/v2/query',
       dataType: 'jsonp',
       success:ebt.utils.appendVisibleAtmData
+      // console.log(data)
     })
   },
   addLayersAndIdleListener : function () {
