@@ -102,6 +102,7 @@ ebt.utils = {
     phrases["directions_link"] = directions_link;
     location_name = row_hash['location_name']
     atm_name = row_hash['atm_name']
+    ebtnearme_id = row_hash['ebtnearme_id']
 
     switch (type){
       case 'store':
@@ -137,7 +138,7 @@ ebt.utils = {
     phrases["cost_phrase"] = cost_phrase;
 
     // See CfA Wufoo API docs for details
-    wufoo_url = 'https://codeforamerica.wufoo.com/forms/ebtnearme-feedback/def/field3=' + type + '&field2=' + text_address;
+    wufoo_url = 'https://codeforamerica.wufoo.com/forms/ebtnearme-feedback/def/field3=' + type + '&field2=' + text_address + '&field108=' + ebtnearme_id;
     feedback_link_html = '<a href="' + wufoo_url + '">Report a problem with this location</a>'
     phrases["feedback_link_html"] = feedback_link_html;
     return phrases;
@@ -184,7 +185,7 @@ ebt.utils = {
     var center = ebt.map.getCenter()
     var query = ['SELECT *',
                 'FROM ' + ebt.fusion.table,
-                'WHERE ST_INTERSECTS(geo_address, CIRCLE(LATLNG' + center + ', ' + r + '))',
+                'WHERE ST_INTERSECTS(text_address, CIRCLE(LATLNG' + center + ', ' + r + '))',
                 'LIMIT 12']
                 .join(' ')
 
